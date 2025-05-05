@@ -38,6 +38,22 @@ jobs:
       - name: Push Artifactory Registry
         run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
+      - name: Crear archivo env-vars.yaml
+        run: |
+          echo "creating env-vars.yaml..."
+          echo "env:" > env-vars.yaml
+          grep -v '^#' .env | grep -v '^$' | while IFS='=' read -r key value; do
+            clean_value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
+            echo "  $key: \"$clean_value\"" >> env-vars.yaml
+          done
+          cat env-vars.yaml
+
+      - name: Upload env-vars.yaml
+        uses: actions/upload-artifact@v3
+        with:
+          name: env-vars
+          path: env-vars.yaml
+  
   deploy:
     name: Deploy Cloud Run
     runs-on: ubuntu-latest
@@ -55,15 +71,10 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT }}
           install_components: 'gke-gcloud-auth-plugin'
 
-      - name: Crear archivo env-vars.yaml
-        run: |
-          echo "creating env-vars.yaml..."
-          echo "env:" > env-vars.yaml
-          grep -v '^#' .env | grep -v '^$' | while IFS='=' read -r key value; do
-            clean_value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
-            echo "  $key: \"$clean_value\"" >> env-vars.yaml
-          done
-          cat env-vars.yaml
+      - name: Download env-vars.yaml
+        uses: actions/download-artifact@v3
+        with:
+          name: env-vars
 
       - name: Deploy Cloud Run
         run: |
@@ -72,4 +83,4 @@ jobs:
           --region $REGION \
           --platform managed \
           --allow-unauthenticated \
-          --env-vars-file env-vars.yaml
+          --env-vars-file env-vars/env-vars.yaml
