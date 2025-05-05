@@ -8,10 +8,7 @@ on:
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
   REGION: us-central1
-  REPO_NAME: ${{ env.SERVICE_NAME }}
-  IMAGE_NAME: ${{ env.SERVICE_NAME }}:${{ github.sha }}
-  ARTIFACT_REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}
-
+  
 jobs:
   build:
     name: Build image
@@ -36,10 +33,10 @@ jobs:
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
       - name: Build Image
-        run: docker build -t $ARTIFACT_REGISTRY ./backend
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} ./backend
 
       - name: Push Artifactory Registry
-        run: docker push $ARTIFACT_REGISTRY
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
       - name: Parse .env to env vars
         run: |
@@ -65,8 +62,8 @@ jobs:
 
       - name: Deploy Cloud Run
         run: |
-          gcloud run deploy $SERVICE_NAME \
-          --image $ARTIFACT_REGISTRY \
+          gcloud run deploy ${{ SERVICE_NAME }} \
+          --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
           --region $REGION \
           --platform managed \
           --allow-unauthenticated \
