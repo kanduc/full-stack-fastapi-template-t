@@ -1,0 +1,73 @@
+name: Pipeline CI/CD Cloud Run
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  SERVICE_NAME: ${{ github.event.repository.name }}
+  REGION: us-central1
+  REPO_NAME: ${{ env.SERVICE_NAME }}
+  IMAGE_NAME: ${{ env.SERVICE_NAME }}:${{ github.sha }}
+  ARTIFACT_REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}
+
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Google Account
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Configure Docker Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build Image
+        run: docker build -t $ARTIFACT_REGISTRY ./backend
+
+      - name: Push Artifactory Registry
+        run: docker push $ARTIFACT_REGISTRY
+
+      - name: Parse .env to env vars
+      run: |
+        ENV_VARS=$(grep -v '^#' .env | xargs | sed 's/ /,/g')
+        echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
+
+  deploy:
+    name: Deploy Cloud Run
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Google Account
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy $SERVICE_NAME \
+          --image $ARTIFACT_REGISTRY \
+          --region $REGION \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars "$ENV_VARS_CSV"
