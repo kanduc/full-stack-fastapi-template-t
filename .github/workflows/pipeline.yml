@@ -40,8 +40,10 @@ jobs:
 
       - name: Parse .env to env vars
         run: |
-          ENV_VARS=$(grep -v '^#' .env | awk -F '=' '{print $1 "=" "\"" $2 "\""}' | xargs)
-          echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
+          set -o allexport
+          source .env
+          set +o allexport
+          echo "ENV_VARS_CSV=$(env | grep -E '^DOMAIN|^FRONTEND_HOST|^ENVIRONMENT|^PROJECT_NAME|^STACK_NAME|^BACKEND_CORS_ORIGINS|^SECRET_KEY|^FIRST_SUPERUSER|^FIRST_SUPERUSER_PASSWORD|^SMTP_HOST|^SMTP_USER|^SMTP_PASSWORD|^EMAILS_FROM_EMAIL|^SMTP_TLS|^SMTP_SSL|^SMTP_PORT|^POSTGRES_SERVER|^POSTGRES_PORT|^POSTGRES_DB|^POSTGRES_USER|^POSTGRES_PASSWORD|^SENTRY_DSN|^DOCKER_IMAGE_BACKEND|^DOCKER_IMAGE_FRONTEND' | awk -F= '{print $1"="$2}' | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_ENV
 
       - name: Debug Env Vars
         run: |
