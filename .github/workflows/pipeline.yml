@@ -43,6 +43,10 @@ jobs:
           ENV_VARS=$(grep -v '^#' .env | xargs | sed 's/ /,/g')
           echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
 
+      - name: Debug Env Vars
+        run: |
+          echo "Parsed env vars: $ENV_VARS_CSV"
+
   deploy:
     name: Deploy Cloud Run
     runs-on: ubuntu-latest
