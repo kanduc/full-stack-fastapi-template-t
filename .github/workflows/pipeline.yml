@@ -41,7 +41,6 @@ jobs:
       - name: Crear archivo env-vars.yaml
         run: |
           echo "creating env-vars.yaml..."
-          echo "env:" > env-vars.yaml
           grep -v '^#' .env | grep -v '^$' | while IFS='=' read -r key value; do
             clean_value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
             # Forzar que todos los valores sean cadenas entre comillas
