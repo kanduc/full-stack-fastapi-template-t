@@ -13,12 +13,12 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-COPY . /app/
+COPY ./scripts /app/scripts
 
-COPY backend/uv.lock /app/uv.lock
-COPY backend/pyproject.toml /app/pyproject.toml
-COPY backend/alembic.ini /app/alembic.ini
-COPY backend/app /app/app
+COPY ./uv.lock /app/uv.lock
+COPY ./pyproject.toml /app/pyproject.toml
+COPY ./alembic.ini /app/alembic.ini
+COPY ./app /app/app
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
