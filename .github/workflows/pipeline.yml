@@ -83,4 +83,4 @@ jobs:
           --region $REGION \
           --platform managed \
           --allow-unauthenticated \
-          --env-vars-file env-vars/env-vars.yaml
+          --env-vars-file env-vars.yaml
