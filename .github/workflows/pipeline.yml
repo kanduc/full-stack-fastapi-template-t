@@ -42,9 +42,9 @@ jobs:
         run: docker push $ARTIFACT_REGISTRY
 
       - name: Parse .env to env vars
-      run: |
-        ENV_VARS=$(grep -v '^#' .env | xargs | sed 's/ /,/g')
-        echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
+        run: |
+          ENV_VARS=$(grep -v '^#' .env | xargs | sed 's/ /,/g')
+          echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
 
   deploy:
     name: Deploy Cloud Run
