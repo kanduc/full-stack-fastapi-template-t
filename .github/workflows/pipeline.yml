@@ -38,17 +38,6 @@ jobs:
       - name: Push Artifactory Registry
         run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
-      - name: Parse .env to env vars
-        run: |
-          set -o allexport
-          source .env
-          set +o allexport
-          echo "ENV_VARS_CSV=$(env | grep -E '^DOMAIN|^FRONTEND_HOST|^ENVIRONMENT|^PROJECT_NAME|^STACK_NAME|^BACKEND_CORS_ORIGINS|^SECRET_KEY|^FIRST_SUPERUSER|^FIRST_SUPERUSER_PASSWORD|^SMTP_HOST|^SMTP_USER|^SMTP_PASSWORD|^EMAILS_FROM_EMAIL|^SMTP_TLS|^SMTP_SSL|^SMTP_PORT|^POSTGRES_SERVER|^POSTGRES_PORT|^POSTGRES_DB|^POSTGRES_USER|^POSTGRES_PASSWORD|^SENTRY_DSN|^DOCKER_IMAGE_BACKEND|^DOCKER_IMAGE_FRONTEND' | awk -F= '{print $1"="$2}' | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_ENV
-
-      - name: Debug Env Vars
-        run: |
-          echo "Parsed env vars: $ENV_VARS_CSV"
-
   deploy:
     name: Deploy Cloud Run
     runs-on: ubuntu-latest
@@ -66,6 +55,16 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT }}
           install_components: 'gke-gcloud-auth-plugin'
 
+      - name: Crear archivo env-vars.yaml
+        run: |
+          echo "creating env-vars.yaml..."
+          echo "env:" > env-vars.yaml
+          grep -v '^#' .env | grep -v '^$' | while IFS='=' read -r key value; do
+            clean_value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
+            echo "  $key: \"$clean_value\"" >> env-vars.yaml
+          done
+          cat env-vars.yaml
+
       - name: Deploy Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
@@ -73,4 +72,4 @@ jobs:
           --region $REGION \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars "$ENV_VARS_CSV"
+          --env-vars-file env-vars.yaml
