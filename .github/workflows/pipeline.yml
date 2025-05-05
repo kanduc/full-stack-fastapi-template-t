@@ -62,7 +62,7 @@ jobs:
 
       - name: Deploy Cloud Run
         run: |
-          gcloud run deploy ${{ SERVICE_NAME }} \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
           --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
           --region $REGION \
           --platform managed \
