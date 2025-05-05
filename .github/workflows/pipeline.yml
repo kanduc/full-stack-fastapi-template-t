@@ -44,7 +44,9 @@ jobs:
           echo "env:" > env-vars.yaml
           grep -v '^#' .env | grep -v '^$' | while IFS='=' read -r key value; do
             clean_value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
-            echo "  $key: \"$clean_value\"" >> env-vars.yaml
+            if [ -n "$clean_value" ]; then
+              echo "  $key: \"$clean_value\"" >> env-vars.yaml
+            fi
           done
           cat env-vars.yaml
 
