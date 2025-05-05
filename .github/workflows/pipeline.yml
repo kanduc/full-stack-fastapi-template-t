@@ -40,7 +40,7 @@ jobs:
 
       - name: Parse .env to env vars
         run: |
-          ENV_VARS=$(grep -v '^#' .env | xargs | sed 's/ /,/g')
+          ENV_VARS=$(grep -v '^#' .env | awk -F '=' '{print $1 "=" "\"" $2 "\""}' | xargs)
           echo "ENV_VARS_CSV=$ENV_VARS" >> $GITHUB_ENV
 
       - name: Debug Env Vars
