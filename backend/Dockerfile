@@ -20,8 +20,6 @@ COPY backend/pyproject.toml /app/pyproject.toml
 COPY backend/alembic.ini /app/alembic.ini
 COPY backend/app /app/app
 
-COPY .env /app/.env
-
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
